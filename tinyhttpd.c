@@ -25,10 +25,10 @@
 //#include <pthread.h>
 #include <sys/wait.h>
 #include <stdlib.h>
-
+#include "demo/learn.h"//自己写的一些东西
 #define ISspace(x) isspace((int)(x))
 
-#define SERVER_STRING "Server: 云守护httpd/0.1.1\r\n"
+#define SERVER_STRING "Server: Sen httpd/0.1.1\r\n"
 
 //void accept_request(int);
 void * accept_request(void *thread_arg);
@@ -43,7 +43,29 @@ void not_found(int);
 void serve_file(int, const char *);
 int startup(u_short *);
 void unimplemented(int);
+//自己修改的
+void listfiles(int client);
 
+void listfiles(int client){
+    char buf[1024];
+	headers(client, "Null");
+	//发送html主体内容
+	strcpy(buf, "<p>Lol...\r\n");
+    send(client, buf, strlen(buf), 0);
+	
+    //sprintf(buf, "<HTML><TITLE>FileList</TITLE>\r\n");
+    //send(client, buf, strlen(buf), 0);
+   /* sprintf(buf, "<BODY><P>Hello\r\n");
+    send(client, buf, strlen(buf), 0);
+    sprintf(buf, "Linux\r\n");
+    send(client, buf, strlen(buf), 0);
+    sprintf(buf, "is Best.\r\n");
+    send(client, buf, strlen(buf), 0);
+    sprintf(buf, "</BODY></HTML>\r\n");
+    send(client, buf, strlen(buf), 0);;*/
+	
+}
+//它自己原来的
 /*A request has caused a call to accept() on the server port to
  * return.  Process the request appropriately.
  * Parameters: the socket connected to the client */
@@ -127,14 +149,15 @@ void * accept_request(void *thread_arg) {
                 (st.st_mode & S_IXOTH))
             cgi = 1;
         if (!cgi){
-            serve_file(client, path); //直接返回文件数据
+			listfiles(client);//任何情况下都调用这个动态生成的html页面。
+            //serve_file(client, path); //直接返回文件数据
 			//这里的path是个字符串数组,存着用户要访问的文件，传入fopen函数。
 			printf("系统将要把:%s文件打开并返回给流\n",path); //在控制台显示传入的文件名
 				}
         else
             execute_cgi(client, path, method, query_string); //有查询参数，作参数查询处理
     }
-
+	usleep(10000);
     close(client);
     return (NULL);
 }
@@ -145,7 +168,7 @@ void * accept_request(void *thread_arg) {
 void bad_request(int client) {
     //返回400
     char buf[1024];
-
+	headers(client, "null");
     sprintf(buf, "HTTP/1.0 400 BAD REQUEST\r\n");
     send(client, buf, sizeof (buf), 0);
     sprintf(buf, "Content-type: text/html\r\n");
