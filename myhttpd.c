@@ -92,7 +92,9 @@ void * accept_request(void *thread_arg) {
 		if(strcmp(head->filename,".")==0) continue;
 		if(strcmp(head->filename,"..")==0) continue;
 		
-		strcat(buf,"<tr><td><a href='#'>");
+		strcat(buf,"<tr><td><a href='");
+		strcat(buf,head->filename);
+		strcat(buf,"'>");
 		strcat(buf,head->filename);
 		strcat(buf,"</a></tr></td>");
 		
