@@ -8,7 +8,7 @@
 #include <strings.h>
 #include <string.h>
 #include <sys/stat.h>
-//#include <pthread.h>
+#include <pthread.h>
 #include <sys/wait.h>
 #include <stdlib.h>
 #include "demo/learn.h"//自己写的一些东西
@@ -19,8 +19,8 @@ void * accept_request(void *thread_arg);
 int startup(u_short *port);
 void error_die(const char *sc);
 //主函数入口,编译时
-//gcc -W -Wall -lsocket -lpthread -o httpd httpd.c  在linux 可以去掉-lsocket
-//gcc -W -Wall -lpthread -o httpd httpd.c
+
+//gcc -W -Wall -pthread -o httpd httpd.c
 //参考开源tinyhttpd
 int main(int argc, char *argv[]) {
     int server_sock = -1;
@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     int client_sock = -1;
     struct sockaddr_in client_name;
     int client_name_len = sizeof (client_name);
-//  pthread_t newthread;
+    pthread_t newthread;
     //建立socket，监听端口
     server_sock = startup(&port);
     printf("httpd running on port %d\n", port);
@@ -45,11 +45,11 @@ int main(int argc, char *argv[]) {
         if (client_sock == -1)
             error_die("accept");
        // PrintSocketAddress((struct sockaddr*) &client_name, stdout);
-        accept_request(client_sock); 
+       // accept_request(client_sock); 
           //printf("client_sock:%d\n",client_sock);
         //子线程处理http 请求
- //       if (pthread_create(&newthread, NULL, accept_request, (void*) client_sock) != 0)
- //           perror("pthread_create");
+        if (pthread_create(&newthread, NULL, accept_request, (void*) client_sock) != 0)
+           perror("pthread_create");
     }
 
     close(server_sock);
@@ -62,16 +62,16 @@ void * accept_request(void *thread_arg) {
 
 
     int client;
+	int n;
+	int box[1024];
 	char buf[1024*2048];
     client = (int) thread_arg;
 	List *head;
 	char *getpath;
 	getpath=getrunpath();
 	head=getdirlist(getpath);//得到保存文件名的指针
-	
-	
-	
     memset(buf,'\0',sizeof(buf));//全部置空。
+	if(n = recv(client, box, sizeof(box), 0)>0){ //接收客户机数据
 	strcat(buf,"HTTP/1.0 200 OK\r\n");
     //strcpy(buf, "HTTP/1.0 200 OK\r\n");
     //send(client, buf, strlen(buf), 0);
@@ -99,8 +99,9 @@ void * accept_request(void *thread_arg) {
 		strcat(buf,"</a></tr></td>");
 		
 	}
-	strcat(buf,"</table>tristan's server (Ubuntu) Server 2016</address></body></html>");
+	strcat(buf,"</table>tristan's server (Ubuntu) Server 2016</address></body></html>\r\n");
 	write(client,buf,1024);
+	}
     close(client);
     return (NULL);
 }
